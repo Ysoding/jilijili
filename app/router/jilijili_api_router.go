@@ -1,7 +1,7 @@
 package router
 
 import (
-	"github.com/Ysoding/jilijili/internal/controller"
+	"github.com/Ysoding/jilijili/app/controller"
 	"github.com/gin-gonic/gin"
 )
 

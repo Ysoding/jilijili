@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Ysoding/jilijili/internal/controller"
-	"github.com/Ysoding/jilijili/internal/router"
-	"github.com/Ysoding/jilijili/internal/service"
+	"github.com/Ysoding/jilijili/app/controller"
+	"github.com/Ysoding/jilijili/app/router"
+	"github.com/Ysoding/jilijili/app/service"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
 	"go.uber.org/zap"

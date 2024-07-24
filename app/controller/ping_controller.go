@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"github.com/Ysoding/jilijili/internal/service"
+	"github.com/Ysoding/jilijili/app/service"
 	"github.com/gin-gonic/gin"
 )
 
