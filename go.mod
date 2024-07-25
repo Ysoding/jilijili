@@ -4,6 +4,7 @@ go 1.22.3
 
 require (
 	github.com/ardanlabs/conf/v3 v3.1.7
+	github.com/ardanlabs/darwin/v3 v3.3.1
 	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-gonic/gin v1.10.0
 	github.com/jackc/pgx/v5 v5.6.0

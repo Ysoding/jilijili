@@ -38,9 +38,9 @@ func NewHTTPServer(lc fx.Lifecycle, r *gin.Engine, log *zap.Logger, jilijiliRout
 		}
 		DB struct {
 			User         string `conf:"default:postgres"`
-			Password     string `conf:"default:123456,mask"`
-			Host         string `conf:"default:localhost"`
-			Name         string `conf:"default:jili"`
+			Password     string `conf:"default:postgres,mask"`
+			Host         string `conf:"default:database-service"`
+			Name         string `conf:"default:postgres"`
 			MaxIdleConns int    `conf:"default:0"`
 			MaxOpenConns int    `conf:"default:0"`
 			DisableTLS   bool   `conf:"default:true"`
