@@ -7,6 +7,7 @@ require (
 	github.com/ardanlabs/darwin/v3 v3.3.1
 	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-gonic/gin v1.10.0
+	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.6.0
 	go.uber.org/fx v1.22.1
 	go.uber.org/zap v1.26.0
