@@ -1,4 +1,4 @@
-package router
+package web
 
 import (
 	"go.uber.org/fx"

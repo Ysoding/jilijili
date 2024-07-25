@@ -1,4 +1,4 @@
-package router
+package web
 
 import (
 	"github.com/Ysoding/jilijili/app/controller"
