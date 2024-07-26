@@ -8,12 +8,17 @@ import (
 	"time"
 
 	"github.com/Ysoding/jilijili/app/domain"
-	"github.com/Ysoding/jilijili/app/global"
 	"github.com/Ysoding/jilijili/pkg/sqldb"
 	"github.com/Ysoding/jilijili/pkg/sqldb/dbarray"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
+)
+
+var (
+	ErrNotFound              = errors.New("user not found")
+	ErrUniqueEmail           = errors.New("email is not unique")
+	ErrAuthenticationFailure = errors.New("authentication failed")
 )
 
 type UserRepository interface {
@@ -35,13 +40,13 @@ func NewUserRepository(db *sqlx.DB, log *zap.Logger) UserRepository {
 func (r *userRepository) Create(ctx context.Context, usr domain.User) error {
 	const q = `
 	INSERT INTO users
-		(user_id, name, email, password_hash, roles, department, enabled, date_created, date_updated)
+		(user_id, name, email, password_hash, roles, enabled, date_created, date_updated)
 	VALUES
-		(:user_id, :name, :email, :password_hash, :roles, :department, :enabled, :date_created, :date_updated)`
+		(:user_id, :name, :email, :password_hash, :roles, :enabled, :date_created, :date_updated)`
 
 	if err := sqldb.NamedExecContext(ctx, r.log, r.db, q, toDBUser(usr)); err != nil {
 		if errors.Is(err, sqldb.ErrDBDuplicatedEntry) {
-			return fmt.Errorf("namedexeccontext: %w", global.ErrUniqueEmail)
+			return fmt.Errorf("namedexeccontext: %w", ErrUniqueEmail)
 		}
 		return fmt.Errorf("namedexeccontext: %w", err)
 	}
