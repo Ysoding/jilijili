@@ -8,6 +8,7 @@ import (
 	"github.com/Ysoding/jilijili/cmd/tooling/commands"
 	"github.com/Ysoding/jilijili/pkg/sqldb"
 	"github.com/ardanlabs/conf/v3"
+	"go.uber.org/zap"
 )
 
 var build = "develop"
@@ -80,6 +81,11 @@ func processCommands(args conf.Args, cfg config) error {
 		DisableTLS:   cfg.DB.DisableTLS,
 	}
 
+	logger, err := zap.NewProduction()
+	if err != nil {
+		return err
+	}
+
 	switch args.Num(0) {
 	case "migrate":
 		if err := commands.Migrate(dbConfig); err != nil {
@@ -89,14 +95,13 @@ func processCommands(args conf.Args, cfg config) error {
 		if err := commands.Seed(dbConfig); err != nil {
 			return fmt.Errorf("seeding database: %w", err)
 		}
-	case "migrate-seed":
-		if err := commands.Migrate(dbConfig); err != nil {
-			return fmt.Errorf("migrating database: %w", err)
+	case "useradd":
+		name := args.Num(1)
+		email := args.Num(2)
+		password := args.Num(3)
+		if err := commands.UserAdd(logger, dbConfig, name, email, password); err != nil {
+			return fmt.Errorf("adding user: %w", err)
 		}
-		if err := commands.Seed(dbConfig); err != nil {
-			return fmt.Errorf("seeding database: %w", err)
-		}
-	case "useadd":
 	default:
 		fmt.Println("migrate:    create the schema in the database")
 		fmt.Println("seed:       add data to the database")

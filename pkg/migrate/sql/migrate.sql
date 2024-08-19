@@ -5,7 +5,7 @@ CREATE TABLE users (
 	name          TEXT        NOT NULL,
 	email         TEXT UNIQUE NOT NULL,
 	roles         TEXT[]      NOT NULL,
-	password_hash TEXT        NOT NULL,
+	password		  TEXT        NOT NULL,
   enabled       BOOLEAN     NOT NULL,
 	date_created  TIMESTAMP   NOT NULL,
 	date_updated  TIMESTAMP   NOT NULL,

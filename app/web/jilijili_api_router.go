@@ -7,16 +7,22 @@ import (
 
 type JiliJiliAPIRouter struct {
 	pingController *controller.PingController
+	userController *controller.UserController
 }
 
 func NewJiliJiliAPIRouter(
 	pingController *controller.PingController,
+	userController *controller.UserController,
 ) *JiliJiliAPIRouter {
 	return &JiliJiliAPIRouter{
 		pingController: pingController,
+		userController: userController,
 	}
 }
 
-func (j *JiliJiliAPIRouter) RegisterPingAPI(r *gin.RouterGroup) {
-	r.GET("/ping", j.pingController.HandlePing)
+func (j *JiliJiliAPIRouter) RegisterRoutes(server *gin.Engine) {
+	g := server.Group("/v1")
+	j.pingController.RegisterRoutes(g)
+	j.userController.RegisterRoutes(g)
+	// r.GET("/v1/ping", j.pingController.HandlePing)
 }

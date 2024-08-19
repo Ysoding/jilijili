@@ -4,7 +4,7 @@ INSERT INTO
     name,
     email,
     roles,
-    password_hash,
+    password,
     enabled,
     date_created,
     date_updated
@@ -12,12 +12,12 @@ INSERT INTO
 VALUES
   (
     '5cf37266-3473-4006-984f-9325122678b7',
-    'Admin Gopher',
-    'admin@example.com',
+    '西门吹雪',
+    'xmchx@test.com',
     '{ADMIN}',
-    '$2a$10$1ggfMVZV6Js0ybvJufLRUOWHS5f6KneuP0XwwHpJ8L8ipdry9f2/a',
+    '$2a$10$H2DpOWjcFuIctX6DA/y/uueCOntRnx6Ec2DVj76EzT6JTwvhDuXz.',
     true,
-    '2019-03-24 00:00:00',
+    '2024-03-24 00:00:00',
     '2019-03-24 00:00:00'
   ),
   (
@@ -25,7 +25,7 @@ VALUES
     'User Gopher',
     'user@example.com',
     '{USER}',
-    '$2a$10$9/XASPKBbJKVfCAZKDH.UuhsuALDr5vVm6VrYA9VFR8rccK86C1hW',
+    '$2a$10$H2DpOWjcFuIctX6DA/y/uueCOntRnx6Ec2DVj76EzT6JTwvhDuXz.',
     true,
     '2019-03-24 00:00:00',
     '2019-03-24 00:00:00'

@@ -9,58 +9,53 @@ import (
 	"time"
 
 	"github.com/Ysoding/jilijili/app/controller"
+	"github.com/Ysoding/jilijili/app/repository"
 	"github.com/Ysoding/jilijili/app/service"
 	"github.com/Ysoding/jilijili/app/web"
 	"github.com/Ysoding/jilijili/pkg/sqldb"
 	"github.com/ardanlabs/conf/v3"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/jmoiron/sqlx"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 var build = "develop"
 
-func NewHTTPServer(lc fx.Lifecycle, r *gin.Engine, log *zap.Logger, jilijiliRouter *web.JiliJiliAPIRouter) *http.Server {
-	log.Info("startup", zap.Int("GOMAXPROCS", runtime.GOMAXPROCS(0)))
-
-	// -------------------------------------------------------------------------
-	// Configuration
-	cfg := struct {
-		conf.Version
-		Web struct {
-			ReadTimeout        time.Duration `conf:"default:5s"`
-			WriteTimeout       time.Duration `conf:"default:10s"`
-			IdleTimeout        time.Duration `conf:"default:120s"`
-			ShutdownTimeout    time.Duration `conf:"default:20s"`
-			APIHost            string        `conf:"default:0.0.0.0:9000"`
-			CORSAllowedOrigins []string      `conf:"default:*"`
-		}
-		DB struct {
-			User         string `conf:"default:postgres"`
-			Password     string `conf:"default:postgres,mask"`
-			Host         string `conf:"default:database-service"`
-			Name         string `conf:"default:postgres"`
-			MaxIdleConns int    `conf:"default:0"`
-			MaxOpenConns int    `conf:"default:0"`
-			DisableTLS   bool   `conf:"default:true"`
-		}
-	}{
-		Version: conf.Version{
-			Build: build,
-			Desc:  "Jili",
-		},
+type Config struct {
+	Version conf.Version
+	Web     struct {
+		ReadTimeout        time.Duration `conf:"default:5s"`
+		WriteTimeout       time.Duration `conf:"default:10s"`
+		IdleTimeout        time.Duration `conf:"default:120s"`
+		ShutdownTimeout    time.Duration `conf:"default:20s"`
+		APIHost            string        `conf:"default:0.0.0.0:9000"`
+		CORSAllowedOrigins []string      `conf:"default:*"`
 	}
+	DB struct {
+		User         string `conf:"default:postgres"`
+		Password     string `conf:"default:postgres,mask"`
+		Host         string `conf:"default:database-service"`
+		Name         string `conf:"default:postgres"`
+		MaxIdleConns int    `conf:"default:0"`
+		MaxOpenConns int    `conf:"default:0"`
+		DisableTLS   bool   `conf:"default:true"`
+	}
+}
 
-	help, err := conf.Parse("JILI", &cfg)
+func NewConfig() (*Config, error) {
+	cfg := &Config{}
+	_, err := conf.Parse("JILI", cfg)
 	if err != nil {
 		if errors.Is(err, conf.ErrHelpWanted) {
-			fmt.Println(help)
-			return nil
+			return nil, fmt.Errorf("parsing config: %w", err)
 		}
-		panic(fmt.Errorf("parsing config: %w", err))
 	}
+	return cfg, nil
+}
 
+func NewDatabase(cfg *Config, lc fx.Lifecycle, log *zap.Logger) (*sqlx.DB, error) {
 	db, err := sqldb.Open(sqldb.Config{
 		User:         cfg.DB.User,
 		Password:     cfg.DB.Password,
@@ -70,15 +65,24 @@ func NewHTTPServer(lc fx.Lifecycle, r *gin.Engine, log *zap.Logger, jilijiliRout
 		MaxOpenConns: cfg.DB.MaxOpenConns,
 		DisableTLS:   cfg.DB.DisableTLS,
 	})
-
 	if err != nil {
-		panic(fmt.Errorf("connecting to db: %w", err))
+		return nil, fmt.Errorf("connecting to db: %w", err)
 	}
 
-	err = sqldb.StatusCheck(context.Background(), db)
-	if err != nil {
-		panic(fmt.Errorf("connecting to db: %w", err))
-	}
+	lc.Append(fx.Hook{
+		OnStart: func(ctx context.Context) error {
+			return sqldb.StatusCheck(ctx, db)
+		},
+		OnStop: func(ctx context.Context) error {
+			return db.Close()
+		},
+	})
+
+	return db, nil
+}
+
+func NewHTTPServer(lc fx.Lifecycle, r *gin.Engine, log *zap.Logger, jilijiliRouter *web.JiliJiliAPIRouter, cfg *Config) *http.Server {
+	log.Info("startup", zap.Int("GOMAXPROCS", runtime.GOMAXPROCS(0)))
 
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     cfg.Web.CORSAllowedOrigins,
@@ -97,18 +101,16 @@ func NewHTTPServer(lc fx.Lifecycle, r *gin.Engine, log *zap.Logger, jilijiliRout
 		IdleTimeout:  cfg.Web.IdleTimeout,
 	}
 
-	rootGroup := r.Group("")
-	jilijiliRouter.RegisterPingAPI(rootGroup)
+	jilijiliRouter.RegisterRoutes(r)
 
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			log.Info("starting service", zap.String("version", cfg.Build))
+			log.Info("starting service", zap.String("version", cfg.Version.Build))
 			go srv.ListenAndServe()
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
 			defer log.Info("service down")
-			defer db.Close()
 			return srv.Shutdown(ctx)
 		},
 	})
@@ -126,6 +128,7 @@ func NewLogger() *zap.Logger {
 	if err != nil {
 		panic(err)
 	}
+	zap.ReplaceGlobals(logger)
 	return logger
 }
 
@@ -135,10 +138,13 @@ func main() {
 			NewHTTPServer,
 			NewRouter,
 			NewLogger,
+			NewConfig,
+			NewDatabase,
 		),
-		service.Module(),
 		web.Module(),
 		controller.Module(),
+		service.Module(),
+		repository.Module(),
 		fx.Invoke(func(server *http.Server) {
 		}),
 	)
